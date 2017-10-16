@@ -13,6 +13,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	initdb()
 	defer closedb()
+	initContainers()
 	var rport = flag.Int("rport", 5000, "registry port you want to start,it must not be used")
 	var wport = flag.Int("wport", 8088, "web port you want to listen, it must not be used")
 	go webTask(*wport)

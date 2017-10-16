@@ -30,16 +30,6 @@ func closedb() {
 	db.Close()
 }
 
-func saveRecord(r *record) {
-	rr := record{}
-	db.FirstOrCreate(&rr, record{Repository: r.Repository})
-	db.Model(rr).Update(record{
-		RebootTime: r.RebootTime,
-		Version:    r.Version,
-		Ports:      r.Ports,
-	})
-}
-
 func queryRecords(rs *[]record) error {
 	return db.Find(rs).Error
 }

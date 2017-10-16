@@ -113,7 +113,7 @@ func restartDockerWithNewImage(r *record, force bool) {
 		log.Printf("start fail! %s", err.Error())
 	} else {
 		log.Printf("new version of %s restarted!", Repository)
-		saveRecord(&record{
+		updateRecord(Repository, record{
 			Repository: Repository,
 			Version:    image.ID,
 			RebootTime: time.Now(),
@@ -221,4 +221,55 @@ func startRegistry(port, webport int) (*docker.Client, *docker.Container, error)
 		return client, container, nil
 	}
 	return nil, nil, fmt.Errorf("check logger")
+}
+
+func initContainers() {
+	client, err := docker.NewClient(endpoint)
+	if err != nil {
+		log.Printf("client init fail when init container:%s", err.Error())
+		return
+	}
+	containers, errListContainers := client.ListContainers(docker.ListContainersOptions{})
+	if errListContainers != nil {
+		log.Printf("list containers fail:%s", err.Error())
+		return
+	}
+	for _, container := range containers {
+		sirdmContainer := false
+		repo := ""
+		imageVersion := ""
+		for _, name := range container.Names {
+			if strings.Index(name, "/sirdm_") == 0 {
+				sirdmContainer = true
+				repo = name[7:]
+				if c, e := client.InspectContainer(name); e == nil {
+					imageVersion = c.Image
+				}
+				break
+			}
+		}
+		if !sirdmContainer {
+			log.Printf("find a container but name not match:%+v", container.Names)
+			continue
+		}
+		if container.State != "running" {
+			log.Printf("find a container but state not match:%s", container.State)
+			continue
+		}
+		log.Printf("save an old container to db :%s", repo)
+		ports := ""
+		for _, port := range container.Ports {
+			if len(ports) == 0 {
+				ports = fmt.Sprintf("%d", port.PublicPort)
+			} else {
+				ports += fmt.Sprintf(",%d", port.PublicPort)
+			}
+		}
+		updateRecord(repo, record{
+			Repository: repo,
+			Version:    imageVersion,
+			RebootTime: time.Unix(container.Created, 0),
+			Ports:      ports,
+		})
+	}
 }

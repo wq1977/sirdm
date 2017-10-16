@@ -4,6 +4,7 @@
 *.so
 *.dylib
 sirdm
+bindata_assetfs.go
 
 # Test binary, build with `go test -c`
 *.test
