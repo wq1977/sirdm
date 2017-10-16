@@ -59,8 +59,12 @@ func restartDockerWithNewImage(r *record, force bool) {
 		Repository: remoteRepo,
 	}, docker.AuthConfiguration{})
 	if err != nil {
-		log.Printf("%s:%+v", remoteRepo, err)
-		return
+		if force {
+			log.Printf("%s meet error: %+v, ignore since force set", remoteRepo, err)
+		} else {
+			log.Printf("%s:%+v", remoteRepo, err)
+			return
+		}
 	}
 
 	time.Sleep(1 * time.Second) //wait a little while since we just finish pull
