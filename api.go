@@ -55,6 +55,9 @@ var glRecord = graphql.NewObject(
 			"ports": &graphql.Field{
 				Type: graphql.String,
 			},
+			"env": &graphql.Field{
+				Type: graphql.String,
+			},
 		},
 	},
 )
@@ -93,6 +96,28 @@ var schema, _ = graphql.NewSchema(
 							repo := p.Args["container"].(string)
 							r := updateRecord(repo, record{
 								Ports: p.Args["value"].(string),
+							})
+							getRecord(r, repo)
+							restartDockerWithNewImage(r, true)
+							var records []record
+							err := queryRecords(&records)
+							return records, err
+						},
+					},
+					"env": &graphql.Field{
+						Type: graphql.NewList(glRecord),
+						Args: graphql.FieldConfigArgument{
+							"value": &graphql.ArgumentConfig{
+								Type: graphql.NewNonNull(graphql.String),
+							},
+							"container": &graphql.ArgumentConfig{
+								Type: graphql.NewNonNull(graphql.String),
+							},
+						},
+						Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+							repo := p.Args["container"].(string)
+							r := updateRecord(repo, record{
+								Env: p.Args["value"].(string),
 							})
 							getRecord(r, repo)
 							restartDockerWithNewImage(r, true)

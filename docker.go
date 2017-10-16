@@ -99,11 +99,13 @@ func restartDockerWithNewImage(r *record, force bool) {
 		}
 		eps[docker.Port(fmt.Sprintf("%s/tcp", port))] = struct{}{}
 	}
+	envs := strings.Split(r.Env, "|")
 	container, err := client.CreateContainer(docker.CreateContainerOptions{
 		Name: containerName,
 		Config: &docker.Config{
 			Image:        remoteRepo,
 			ExposedPorts: eps,
+			Env:          envs,
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: pbs,

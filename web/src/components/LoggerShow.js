@@ -24,7 +24,7 @@ class LoggerShow extends React.Component {
         Component: LoggerShow <p />
         {logs}
         <Websocket
-          url={`ws://localhost:8088/log?repo=${this.props.repo}`}
+          url={`ws://192.168.0.148:8088/log?repo=${this.props.repo}`}
           onMessage={this.handleLog.bind(this)}
         />
       </div>

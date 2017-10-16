@@ -8,8 +8,11 @@ export default {
     containers: [],
     portDialogVisible: false,
     portDialogLoading: false,
+    envDialogVisible: false,
+    envDialogLoading: false,
     logVisible: false,
     inputPorts: '',
+    inputEnv: '',
     selectContainer: 0,
   },
 
@@ -31,6 +34,14 @@ export default {
         selectContainer: selectContainerName });
       yield put({ type: 'save', payload: { data } });
       yield put({ type: 'runtime', payload: { portDialogLoading: false, portDialogVisible: false } });
+    },
+    *changeEnv({ payload }, { call, put, select }) {  // eslint-disable-line
+      const docker = yield select(state => state.docker);
+      const selectContainerName = docker.containers[docker.selectContainer].repo;
+      const { data } = yield call(dockerservice.changeEnv, { ...payload,
+        selectContainer: selectContainerName });
+      yield put({ type: 'save', payload: { data } });
+      yield put({ type: 'runtime', payload: { envDialogLoading: false, envDialogVisible: false } });
     },
   },
 

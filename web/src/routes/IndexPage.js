@@ -14,9 +14,15 @@ import styles from './IndexPage.css';
 import LoggerShow from '../components/LoggerShow';
 
 let input;
+let envinput;
 function handleChangePort(props) {
   props.dispatch({ type: 'docker/runtime', payload: { portDialogLoading: true } });
   props.dispatch({ type: 'docker/changePorts', payload: { value: input.refs.input.value } });
+}
+
+function handleChangeEnv(props) {
+  props.dispatch({ type: 'docker/runtime', payload: { envDialogLoading: true } });
+  props.dispatch({ type: 'docker/changeEnv', payload: { value: envinput.refs.input.value } });
 }
 
 function showLog(props, idx) {
@@ -25,10 +31,20 @@ function showLog(props, idx) {
     payload: { logVisible: true, selectContainer: idx } });
 }
 
+function showEnvDialog(props, idx) {
+  props.dispatch({
+    type: 'docker/runtime',
+    payload: { envDialogVisible: true, selectContainer: idx } });
+}
+
 function showPortDialog(props, idx) {
   props.dispatch({
     type: 'docker/runtime',
     payload: { portDialogVisible: true, selectContainer: idx } });
+}
+
+function handleEnvCancel(props) {
+  props.dispatch({ type: 'docker/runtime', payload: { envDialogVisible: false } });
 }
 
 function handleCancel(props) {
@@ -41,9 +57,10 @@ function IndexPage(props) {
       return (
         <Row type="flex" justify="center" key={index}>
           <Col span={3}>名称</Col>
-          <Col span={9}>启动时间</Col>
+          <Col span={6}>启动时间</Col>
           <Col span={3}>运行镜像版本</Col>
           <Col span={3}>开放端口</Col>
+          <Col span={3}>环境变量</Col>
           <Col span={6}>操作</Col>
         </Row>
       );
@@ -51,9 +68,10 @@ function IndexPage(props) {
     return (
       <Row type="flex" justify="center" key={index}>
         <Col span={3}>{value.repo}</Col>
-        <Col span={9}>{value.time}</Col>
+        <Col span={6}>{value.time}</Col>
         <Col span={3}>{value.version.substring(7, 23)}</Col>
         <Col span={3}>{value.ports}</Col>
+        <Col span={3}>{value.env}</Col>
         <Col span={6}>
           <Button
             onClick={showLog.bind(null, props, index - 1)}
@@ -63,18 +81,23 @@ function IndexPage(props) {
             onClick={showPortDialog.bind(null, props, index - 1)}
             className={styles.button}
           >修改端口</Button>
+          <Button
+            onClick={showEnvDialog.bind(null, props, index - 1)}
+            className={styles.button}
+          >环境变量</Button>
         </Col>
       </Row>
     );
   });
-  const { portDialogVisible, portDialogLoading, logVisible } = props.docker;
+  const { envDialogVisible, envDialogLoading,
+    portDialogVisible, portDialogLoading, logVisible } = props.docker;
   let selectRepo = '';
   if (props.docker.selectContainer < props.docker.containers.length) {
     selectRepo = props.docker.containers[props.docker.selectContainer].repo;
   }
   return (
     <div className={styles.normal}>
-      <h1 className={styles.title}>SIRDM 也许不是一个好名字，但是这不重要!</h1>
+      <h1 className={styles.title}>SIRDM</h1>
       <h2>运行中的镜像</h2>
       <div className={styles.list}>
         {contains}
@@ -95,6 +118,24 @@ function IndexPage(props) {
           defaultValue={props.docker.inputPorts}
           ref={c => (input = c)}
           placeholder="请输入要暴漏的端口，逗号分割"
+        />
+      </Modal>
+      <Modal
+        visible={envDialogVisible}
+        title="修改容器环境变量"
+        onOk={handleChangeEnv.bind(null, props)}
+        onCancel={handleEnvCancel.bind(null, props)}
+        footer={[
+          <Button key="back" size="large" onClick={handleEnvCancel.bind(null, props)}>取消</Button>,
+          <Button key="submit" type="primary" size="large" loading={envDialogLoading} onClick={handleChangeEnv.bind(null, props)}>
+            确定
+          </Button>,
+        ]}
+      >
+        <Input
+          defaultValue={props.docker.inputEnv}
+          ref={c => (envinput = c)}
+          placeholder="请输入要设置的环境变量，|分割"
         />
       </Modal>
       <LoggerShow visible={logVisible} repo={selectRepo} />
