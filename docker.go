@@ -229,6 +229,13 @@ func initContainers() {
 		log.Printf("client init fail when init container:%s", err.Error())
 		return
 	}
+
+	client.StopContainer("sirdm_registry", 10)
+	client.RemoveContainer(docker.RemoveContainerOptions{
+		ID:            "sirdm_registry",
+		RemoveVolumes: true,
+	})
+
 	containers, errListContainers := client.ListContainers(docker.ListContainersOptions{})
 	if errListContainers != nil {
 		log.Printf("list containers fail:%s", err.Error())
