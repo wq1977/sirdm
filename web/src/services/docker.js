@@ -26,3 +26,12 @@ export function changeEnv(payload) {
     },
   });
 }
+
+export function state() {
+  return request('/graphql?query={state{repo%20state}}', {
+    method: 'get',
+    headers: {
+      'Content-Type': 'application/graphql',
+    },
+  });
+}

@@ -23,25 +23,41 @@ export default {
   },
 
   effects: {
-    *list({ payload }, { call, put }) {  // eslint-disable-line
+    *refresh_all({ payload }, { call, put, select }) {
+      const docker = yield select(state => state.docker);
+      const { data } = yield call(dockerservice.state);
+      const containerRunningState = {};
+      data.data.state.forEach((e) => {
+        containerRunningState[e.repo] = e.state;
+      });
+      docker.containers.forEach((c, idx) => {
+        docker.containers[idx].state = containerRunningState[docker.containers[idx].repo];
+      });
+      const containers = [].concat(docker.containers);
+      yield put({ type: 'runtime', payload: { containers } });
+    },
+    *list({ payload }, { call, put }) {
       const { data } = yield call(dockerservice.list, { });
       yield put({ type: 'save', payload: { data } });
+      yield put({ type: 'refresh_all' });
     },
-    *changePorts({ payload }, { call, put, select }) {  // eslint-disable-line
+    *changePorts({ payload }, { call, put, select }) {
       const docker = yield select(state => state.docker);
       const selectContainerName = docker.containers[docker.selectContainer].repo;
       const { data } = yield call(dockerservice.changePorts, { ...payload,
         selectContainer: selectContainerName });
       yield put({ type: 'save', payload: { data } });
       yield put({ type: 'runtime', payload: { portDialogLoading: false, portDialogVisible: false } });
+      yield put({ type: 'refresh_all' });
     },
-    *changeEnv({ payload }, { call, put, select }) {  // eslint-disable-line
+    *changeEnv({ payload }, { call, put, select }) {
       const docker = yield select(state => state.docker);
       const selectContainerName = docker.containers[docker.selectContainer].repo;
       const { data } = yield call(dockerservice.changeEnv, { ...payload,
         selectContainer: selectContainerName });
       yield put({ type: 'save', payload: { data } });
       yield put({ type: 'runtime', payload: { envDialogLoading: false, envDialogVisible: false } });
+      yield put({ type: 'refresh_all' });
     },
   },
 

@@ -2,6 +2,7 @@
 .normal {
   font-family: Georgia, sans-serif;
   margin-top: 3em;
+  margin-bottom: 3em;
   text-align: center;
 }
 
@@ -24,10 +25,20 @@
   line-height: 1.5em;
 }
 
+.buttonlist {
+  flex-direction: row;
+}
+
 .list code {
   background: #f7f7f7;
 }
 
 .button{
   margin: 0 10pt;
+}
+
+.closeLog{
+  position: fixed;
+  right: 20px;
+  top: 20px;
 }

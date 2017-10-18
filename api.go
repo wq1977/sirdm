@@ -1,14 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 
+	"github.com/ahmetalpbalkan/dlog"
 	"github.com/gorilla/websocket"
 	"github.com/graphql-go/graphql"
 )
@@ -38,6 +38,19 @@ func handleRegistryEvent(w http.ResponseWriter, r *http.Request) {
 		go restartDockerWithNewImage(&r, false)
 	}
 }
+
+var glState = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "Record",
+		Fields: graphql.Fields{
+			"repo": &graphql.Field{
+				Type: graphql.String,
+			},
+			"state": &graphql.Field{
+				Type: graphql.String,
+			},
+		},
+	})
 
 var glRecord = graphql.NewObject(
 	graphql.ObjectConfig{
@@ -74,6 +87,29 @@ var schema, _ = graphql.NewSchema(
 							var records []record
 							err := queryRecords(&records)
 							return records, err
+						},
+					},
+					"state": &graphql.Field{
+						Type: graphql.NewList(glState),
+						Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+							var records []record
+							err := queryRecords(&records)
+							if err != nil {
+								return nil, err
+							}
+							res := make([]struct {
+								Repo  string `json:"repo"`
+								State string `json:"state"`
+							}, len(records))
+							for idx, container := range records {
+								state, err := queryContainerState(container.Repository)
+								if err != nil {
+									return nil, err
+								}
+								res[idx].Repo = container.Repository
+								res[idx].State = state
+							}
+							return res, nil
 						},
 					},
 				},
@@ -165,27 +201,19 @@ func handleLogger(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer c.Close()
-	for {
-		line, err := buf.ReadString('\n')
-		if err != nil && err != io.EOF {
-			log.Printf("read log fail:%s", err.Error())
-			return
-		}
-		if err == io.EOF {
-			time.Sleep(time.Second)
-		}
-		if len(line) > 0 {
-			err = c.WriteMessage(1, []byte(line+"\n"))
-			if err != nil {
-				log.Println("write:", err)
-				break
-			}
-		}
+	reader := dlog.NewReader(buf)
+	s := bufio.NewScanner(reader)
+	for s.Scan() {
+		c.WriteMessage(1, s.Bytes())
+	}
+	if err := s.Err(); err != nil {
+		log.Printf("read error: %v", err)
 	}
 }
 
 func webTask(port int) {
 	http.Handle("/", http.FileServer(assetFS()))
+	//http.Handle("/", http.FileServer(http.Dir("web/dist")))
 	http.HandleFunc("/event", handleRegistryEvent)
 	http.HandleFunc("/log", handleLogger)
 	http.HandleFunc("/graphql", handleGraphQL)

@@ -16,8 +16,8 @@ class LoggerShow extends React.Component {
     if (!this.props.visible || this.props.repo.length <= 0) {
       return (<div />);
     }
-    const logs = this.state.log.map((line) => {
-      return (<div>{line}</div>);
+    const logs = this.state.log.map((line, idx) => {
+      return (<div key={idx}>{line}</div>);
     });
     return (
       <div className={styles.normal}>

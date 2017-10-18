@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,20 +15,32 @@ import (
 
 const endpoint = "unix:///var/run/docker.sock"
 
+func queryContainerState(repo string) (string, error) {
+	client, err := docker.NewClient(endpoint)
+	if err != nil {
+		return "", err
+	}
+	container, err := client.InspectContainer("sirdm_" + repo)
+	if err != nil {
+		return "", err
+	}
+	return container.State.Status, nil
+}
+
 func attachLog(repo string) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
 	client, err := docker.NewClient(endpoint)
 	if err != nil {
 		return nil, err
 	}
-	opts := docker.AttachToContainerOptions{
+	opts := docker.LogsOptions{
 		Container:    "sirdm_" + repo,
 		OutputStream: &buf,
 		Stdout:       true,
 		Stderr:       true,
-		Logs:         true,
+		RawTerminal:  true,
 	}
-	err = client.AttachToContainer(opts)
+	err = client.Logs(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -81,25 +94,40 @@ func restartDockerWithNewImage(r *record, force bool) {
 		}
 	}
 
-	client.StopContainer(containerName, 10)
-	client.RemoveContainer(docker.RemoveContainerOptions{
+	if err = client.KillContainer(docker.KillContainerOptions{
+		ID:     containerName,
+		Signal: docker.SIGKILL,
+	}); err != nil {
+		log.Printf("stop container meet error:%s, skip", err.Error())
+	}
+	if err = client.RemoveContainer(docker.RemoveContainerOptions{
 		ID:            containerName,
 		RemoveVolumes: true,
-	})
+		Force:         true,
+	}); err != nil {
+		log.Printf("remove container meet error:%s, skip", err.Error())
+	}
 	pbs := make(map[docker.Port][]docker.PortBinding)
 	eps := make(map[docker.Port]struct{})
 	ports := strings.Split(r.Ports, ",")
 	log.Printf("need open port:%s", r.Ports)
 	for _, port := range ports {
-		pbs[docker.Port(fmt.Sprintf("%s/tcp", port))] = []docker.PortBinding{
-			docker.PortBinding{
-				HostIP:   "0.0.0.0",
-				HostPort: port,
-			},
+		if porti, errConv := strconv.Atoi(port); errConv == nil {
+			pbs[docker.Port(fmt.Sprintf("%d/tcp", porti))] = []docker.PortBinding{
+				docker.PortBinding{
+					HostIP:   "0.0.0.0",
+					HostPort: port,
+				},
+			}
+			eps[docker.Port(fmt.Sprintf("%s/tcp", port))] = struct{}{}
+		} else {
+			log.Printf("invalid port:%s", port)
 		}
-		eps[docker.Port(fmt.Sprintf("%s/tcp", port))] = struct{}{}
 	}
-	envs := strings.Split(r.Env, "|")
+	envs := []string{}
+	if strings.Index(r.Env, "=") > 0 {
+		envs = strings.Split(r.Env, "|")
+	}
 	container, err := client.CreateContainer(docker.CreateContainerOptions{
 		Name: containerName,
 		Config: &docker.Config{
@@ -111,6 +139,10 @@ func restartDockerWithNewImage(r *record, force bool) {
 			PortBindings: pbs,
 		},
 	})
+	if err != nil {
+		log.Printf("create Container fail! %s", err.Error())
+		return
+	}
 	if err = client.StartContainer(container.ID, nil); err != nil {
 		log.Printf("start fail! %s", err.Error())
 	} else {
@@ -277,7 +309,7 @@ func initContainers() {
 		updateRecord(repo, record{
 			Repository: repo,
 			Version:    imageVersion,
-			RebootTime: time.Unix(container.Created, 0),
+			RebootTime: time.Now(),
 			Ports:      ports,
 		})
 	}

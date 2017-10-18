@@ -1,10 +1,10 @@
 
 .normal {
-    position: fixed;
     left: 0;
     top: 0;
     width: 100%;
     height: 100vh;
     background-color: white;
-    text-align: justify;
+    overflow-y: auto;
+    margin: 1em;
 }
