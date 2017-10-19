@@ -20,7 +20,7 @@ var db *gorm.DB
 
 func initdb() {
 	var err error
-	db, err = gorm.Open("sqlite3", "/tmp/sirdm.db")
+	db, err = gorm.Open("sqlite3", "/usr/local/var/sirdm.db")
 	if err != nil {
 		log.Fatal("db init fail!")
 	}

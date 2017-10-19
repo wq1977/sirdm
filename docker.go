@@ -264,6 +264,16 @@ func initContainers() {
 		return
 	}
 
+	if imgs, err := client.ListImages(docker.ListImagesOptions{Filters: map[string][]string{
+		"dangling": {"true"},
+	}}); err == nil {
+		for _, img := range imgs {
+			client.RemoveImageExtended(img.ID, docker.RemoveImageOptions{Force: true})
+		}
+	} else {
+		log.Printf("erron in list image %+v", err)
+	}
+
 	client.StopContainer("sirdm_registry", 10)
 	client.RemoveContainer(docker.RemoveContainerOptions{
 		ID:            "sirdm_registry",
