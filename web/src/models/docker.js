@@ -10,9 +10,12 @@ export default {
     portDialogLoading: false,
     envDialogVisible: false,
     envDialogLoading: false,
+    volDialogVisible: false,
+    volDialogLoading: false,
     logVisible: false,
     inputPorts: '',
     inputEnv: '',
+    inputVol: '',
     selectContainer: 0,
   },
 
@@ -57,6 +60,15 @@ export default {
         selectContainer: selectContainerName });
       yield put({ type: 'save', payload: { data } });
       yield put({ type: 'runtime', payload: { envDialogLoading: false, envDialogVisible: false } });
+      yield put({ type: 'refresh_all' });
+    },
+    *changeVol({ payload }, { call, put, select }) {
+      const docker = yield select(state => state.docker);
+      const selectContainerName = docker.containers[docker.selectContainer].repo;
+      const { data } = yield call(dockerservice.changeVol, { ...payload,
+        selectContainer: selectContainerName });
+      yield put({ type: 'save', payload: { data } });
+      yield put({ type: 'runtime', payload: { volDialogLoading: false, volDialogVisible: false } });
       yield put({ type: 'refresh_all' });
     },
   },

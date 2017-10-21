@@ -128,12 +128,19 @@ func restartDockerWithNewImage(r *record, force bool) {
 	if strings.Index(r.Env, "=") > 0 {
 		envs = strings.Split(r.Env, "|")
 	}
+	vols := make(map[string]struct{})
+	for _, v := range strings.Split(r.Env, "|") {
+		if strings.Index(v, ":") > 0 {
+			vols[strings.TrimSpace(v)] = struct{}{}
+		}
+	}
 	container, err := client.CreateContainer(docker.CreateContainerOptions{
 		Name: containerName,
 		Config: &docker.Config{
 			Image:        remoteRepo,
 			ExposedPorts: eps,
 			Env:          envs,
+			Volumes:      vols,
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: pbs,

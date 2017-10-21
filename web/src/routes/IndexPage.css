@@ -42,3 +42,11 @@
   right: 20px;
   top: 20px;
 }
+
+th.btns, td.btns {
+  text-align: center !important;
+}
+
+.table{
+  padding: 10pt;
+}

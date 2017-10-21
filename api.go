@@ -71,6 +71,9 @@ var glRecord = graphql.NewObject(
 			"env": &graphql.Field{
 				Type: graphql.String,
 			},
+			"vols": &graphql.Field{
+				Type: graphql.String,
+			},
 		},
 	},
 )
@@ -162,7 +165,28 @@ var schema, _ = graphql.NewSchema(
 							return records, err
 						},
 					},
-				},
+					"vol": &graphql.Field{
+						Type: graphql.NewList(glRecord),
+						Args: graphql.FieldConfigArgument{
+							"value": &graphql.ArgumentConfig{
+								Type: graphql.NewNonNull(graphql.String),
+							},
+							"container": &graphql.ArgumentConfig{
+								Type: graphql.NewNonNull(graphql.String),
+							},
+						},
+						Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+							repo := p.Args["container"].(string)
+							r := updateRecord(repo, record{
+								Vols: p.Args["value"].(string),
+							})
+							getRecord(r, repo)
+							restartDockerWithNewImage(r, true)
+							var records []record
+							err := queryRecords(&records)
+							return records, err
+						},
+					}},
 			}),
 	},
 )

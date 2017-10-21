@@ -14,6 +14,7 @@ type record struct {
 	RebootTime time.Time `gorm:"index" json:"time"`
 	Ports      string    `json:"ports"` //5000,8081
 	Env        string    `json:"env"`
+	Vols       string    `json:"vols"`
 }
 
 var db *gorm.DB
