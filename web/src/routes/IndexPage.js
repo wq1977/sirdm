@@ -96,13 +96,13 @@ function IndexPage(props) {
     v.time = moment(v.time).format('YYYY-MM-DD HH:mm:ss');
     const btns = (<Row>
       <Row>
-        <Col>
+        <Col span={12}>
           <Button
             onClick={showLog.bind(null, props, idx)}
             className={styles.button}
           >查看日志</Button>
         </Col>
-        <Col>
+        <Col span={12}>
           <Button
             onClick={showPortDialog.bind(null, props, idx)}
             className={styles.button}
@@ -110,13 +110,13 @@ function IndexPage(props) {
         </Col>
       </Row>
       <Row>
-        <Col>
+        <Col span={12}>
           <Button
             onClick={showEnvDialog.bind(null, props, idx)}
             className={styles.button}
           >环境变量</Button>
         </Col>
-        <Col>
+        <Col span={12}>
           <Button
             onClick={showVolDialog.bind(null, props, idx)}
             className={styles.button}
@@ -224,7 +224,7 @@ function IndexPage(props) {
           ]}
         >
           <Input
-            defaultValue={props.docker.inputVol}
+            defaultValue={props.docker.inputVols}
             ref={c => (volinput = c)}
             placeholder="请输入要设置的环境变量，|分割"
           />

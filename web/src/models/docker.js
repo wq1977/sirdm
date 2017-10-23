@@ -15,7 +15,7 @@ export default {
     logVisible: false,
     inputPorts: '',
     inputEnv: '',
-    inputVol: '',
+    inputVols: '',
     selectContainer: 0,
   },
 

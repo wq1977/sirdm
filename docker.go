@@ -129,7 +129,7 @@ func restartDockerWithNewImage(r *record, force bool) {
 		envs = strings.Split(r.Env, "|")
 	}
 	vols := make(map[string]struct{})
-	for _, v := range strings.Split(r.Env, "|") {
+	for _, v := range strings.Split(r.Vols, "|") {
 		if strings.Index(v, ":") > 0 {
 			vols[strings.TrimSpace(v)] = struct{}{}
 		}
