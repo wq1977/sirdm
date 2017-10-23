@@ -171,7 +171,7 @@ function IndexPage(props) {
     return (
       <div className={styles.normal}>
         <h1 className={styles.title}>SIRDM</h1>
-        <h2>运行中的镜像</h2>
+        <h2>运行中的镜像(共{props.docker.containers.length}个)</h2>
         <div className={styles.table}>
           <Table dataSource={dataSource} rowKey="repo" columns={columns} pagination={false} />
         </div>
